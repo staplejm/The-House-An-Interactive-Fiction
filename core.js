@@ -9,10 +9,7 @@ var regexes = [
 var actions = [
   function(action, player, object) {
     if (action == 'enter' && object != null) {
-      destination = object.enter();
-      if(destination == null) {
-        destination = player.location;
-      }
+      let destination = object.enter();
       player.move(destination)
     }
     return player;
@@ -26,10 +23,7 @@ var actions = [
   },
   function(action, player, object) {
     if (action == 'go back') {
-      let destination = player.cameFrom;
-      player.cameFrom = player.location;
-      player.location = destination;
-      player.location.enter();
+      player.move(player.cameFrom);
     }
     return player;
   },
@@ -148,8 +142,10 @@ class Room {
   }
 
   enter() {
+    return this;
+  }
 
-
+  readContents() {
     let text;
     //Get contents of room
     let contents = ""
@@ -197,6 +193,35 @@ class Room {
   }
 }
 
+class Door extends Room {
+  constructor(name, descriptor) {
+    super(name, descriptor);
+    this.locked = true;
+    this.contents = null;
+  }
+
+  addItem(obj) {
+    this.contents = obj;
+  }
+
+  enter() {
+    if(this.locked == false) {
+      return this.contents;
+    } else {
+      addLine("The door is locked")
+      return null;
+    }
+  }
+
+  open() {
+    if(this.locked == false) {
+      player.move(this.contents[0])
+    } else {
+      addLine("The door is locked")
+    }
+  }
+}
+
 class Item {
   constructor(name, descriptor) {
     this.name = name;
@@ -215,9 +240,11 @@ class Player {
     this.cameFrom = null;
   }
 
-  move(location) {
-    this.cameFrom = this.location
-    this.location = location;
-    this.location.enter();
+  move(destination) {
+    if (destination != null) {
+      this.cameFrom = this.location
+      this.location = destination;
+      this.location.readContents();
+    }
   }
 }
